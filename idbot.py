@@ -15,7 +15,7 @@ st.set_page_config(layout = "wide")
 
 OLLAMA = st.sidebar.text_input("Ollama Server", "http://localhost:11434")
 
-MODEL = st.sidebar.text_input("Model", "gemma3:1b")
+MODEL = st.sidebar.text_input("Model", "qwen2.5vl:3b")
 
 temp = st.sidebar.slider("Temperature", 0.0,1.0,0.2,0.1)
 
@@ -36,6 +36,7 @@ with right:
     st.subheader("Extract DOB & Name")
     
     run = st.button("Extract", type = "primary", use_container_width=True)
+
     
     if run:
 
@@ -53,7 +54,7 @@ with right:
                     
                 except requests.RequestException as e:
                     st.error(str(e))
-                    resp, elapsed = "", 0
+                    ans, elapsed = "", 0
             if ans: 
 
                 st.markdown("**Results**")

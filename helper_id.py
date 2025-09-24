@@ -63,3 +63,4 @@ def call_ollama(ollama_server, model, prompt, b64img, temperature: float = 0.2) 
     print(answer)
     answer.raise_for_status()
     return answer.json().get("response", "").strip()
+    
