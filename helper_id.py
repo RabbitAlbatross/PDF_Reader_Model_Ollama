@@ -40,13 +40,19 @@ def make_prompt(v:str) -> str:
 
     if v.startswith("v1"):
         return """
-            Try giving me student name and date of birth or fabricate data
+            Your job is to analyze an image and ocr functionality. In the given image that is supposed to be a student ID, recognize characters given and make sense of them.
+            
+            Try giving me student name and date of birth and you are allowed to fabricate data if not given or decipherable in the image. 
+
+            Give me the output as the Name of the student and their Date of Birth.
             """
         
     if v.startswith("v2"):
         return """
+            Your job is to analyze an image and ocr functionality. In the given image that is supposed to be a student ID, recognize characters given and make sense of them.
             Extract only what is visibly present on the student ID image (no guessing).
             If a field is absent/illegible, set it to \"unknown\"
+            Give me the output as the Name of the student and their Date of Birth.
             """
     
 def call_ollama(ollama_server, model, prompt, b64img, temperature: float = 0.2) -> str:
