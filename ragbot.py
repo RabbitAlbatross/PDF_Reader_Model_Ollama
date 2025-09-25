@@ -2,7 +2,7 @@ import os, time, streamlit as st
 from pathlib import Path
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.llms import ollama
+from langchain_community.llms import Ollama
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 st.set_page_config(page_title="RAGBOT", page_icon="👽")
@@ -11,9 +11,9 @@ st.caption("Tiny RAG with LangChain + FAISS + Ollama")
 
 DATA_DIR = Path("data2")
 FILES = [DATA_DIR/"iphone_history.txt", DATA_DIR/"iphone_specs.txt", DATA_DIR/"iphone_care.txt"]
-EMBED_MODEL = "nomic-embed-text"                # pull once: ollama pull nomic-embed-text
+EMBED_MODEL = "nomic-embed-text"                
 
-HEAVY = st.text_input("Heavy Model", "qwen2.5v1:3b")
+HEAVY = st.text_input("Heavy Model", "qwen2.5:3b")
 LIGHT = st.text_input("Light Model", "gemma3:1b")
 top_k = st.slider("Top-K", 1, 8, 5)
 version = st.radio("Prompt Version", ["v1 (hallucinate)", "v2 (loose RAG)", "v3 (strict RAG)"], horizontal=True)
@@ -45,3 +45,44 @@ with col[1]:
 
 q = st.text_input("Ask a question about iPhones")
 go = st.button("Ask")
+
+def make_prompt(v, question, ctx):
+    if v.startswith("v1"):
+        return f"""
+        You are an imaginative tech storyteller. Ignore accuracy and answer creatively.
+        Question: {question}
+        Answer:
+        """
+    if v.startswith("v2"):
+        return f"""
+        You are a helpful iPhone expert. Use the context if relevant, if missing, use reasonable inferences.
+        Question: {question}
+        Context: {ctx}
+        Answer: 
+        """
+    if v.startswith("v3"):
+        return f"""
+        You are precise. Use ONLY the context. If not in content, say: "I don't know based on the docs."
+        Question: {question}
+        Context: {ctx}
+        Answer with brief citations like [source]:
+        """
+if go:
+    if "store" not in st.session_state:
+            st.warning("Run indexing first.")
+    elif not q.strip():
+            st.warning("Enter a question")
+    else:
+        store = st.session_state["store"]
+        ctx = ""
+        if not version.startswith("v1"):
+            docs = store.similarity_search(q, k=top_k)
+            ctx = "\n\n".join([f"[{d.metadata.get('source', 'doc')}] {d.page_content}" for d in docs])
+            
+        prompt = make_prompt(version, q, ctx)
+        model = HEAVY if model_pick == "Heavy first" else LIGHT
+        llm = Ollama(model=model)
+        with st.spinner(f"Generating with {model}..."):
+            out = llm.invoke(prompt)
+        st.markdown(f"**Model:** '{model}'  |  **Prompt:** {version}")
+        st.write(out)
