@@ -32,3 +32,16 @@ def build_store():
             docs.append({"page_content": c, "metadata": {"source": p.name}})
     emb = OllamaEmbeddings(model=EMBED_MODEL)
     store = FAISS.from_texts([d["page_content"] for d in docs], emb, metadatas=[d["metadata"] for d in docs])
+    return store
+
+col = st.columns(2, gap="large")
+with col[0]:
+    if st.button("Run indexing (vector store)"):
+        t0 = time.time()
+        st.session_state["store"] = build_store()
+        st.success(f"Indexed in {time.time() - t0: .1f} s")
+with col[1]:
+    st.write("Ollama should be running")
+
+q = st.text_input("Ask a question about iPhones")
+go = st.button("Ask")
